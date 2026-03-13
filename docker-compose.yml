@@ -1,0 +1,58 @@
+services:
+  # 后端服务 - C++ REST API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: visitor-backend
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    volumes:
+      - backend-data:/app/data
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - visitor-network
+
+  # 管理后台前端
+  frontend-admin:
+    build:
+      context: ./frontend-admin
+      dockerfile: Dockerfile
+    container_name: visitor-admin
+    restart: unless-stopped
+    ports:
+      - "8081:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - visitor-network
+
+  # 用户端前端
+  frontend-user:
+    build:
+      context: ./frontend-user
+      dockerfile: Dockerfile
+    container_name: visitor-user
+    restart: unless-stopped
+    ports:
+      - "8082:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - visitor-network
+
+networks:
+  visitor-network:
+    driver: bridge
+
+volumes:
+  backend-data:
+    driver: local

@@ -1,0 +1,8 @@
+build/
+cmake-build-*/
+data/
+*.db
+*.db-journal
+.git
+.gitignore
+README.md
