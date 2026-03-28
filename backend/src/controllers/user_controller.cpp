@@ -148,6 +148,30 @@ void setupUserRoutes(crow::SimpleApp& app) {
                 return res;
             }
             
+            // 验证角色是否合法
+            std::vector<std::string> valid_roles = {"superadmin", "admin", "employee", "security", "visitor"};
+            bool role_valid = false;
+            for (const auto& r : valid_roles) {
+                if (role == r) {
+                    role_valid = true;
+                    break;
+                }
+            }
+            if (!role_valid) {
+                res.body = utils::errorResponse(utils::ErrorCode::INVALID_PARAMS, "无效的角色").dump();
+                return res;
+            }
+            
+            // 角色权限层级校验
+            if (payload->role == "admin") {
+                // admin 不能创建 superadmin 或其他 admin
+                if (role == "superadmin" || role == "admin") {
+                    res.code = 403;
+                    res.body = utils::errorResponse(utils::ErrorCode::FORBIDDEN, "无权限创建该角色").dump();
+                    return res;
+                }
+            }
+            
             auto& db = db::Database::getInstance();
             
             // 检查用户名是否已存在
@@ -226,7 +250,41 @@ void setupUserRoutes(crow::SimpleApp& app) {
             
             // 只有管理员可以修改角色和状态
             if (middleware::isAdmin(payload->role)) {
-                if (body.contains("role")) user->role = body["role"].get<std::string>();
+                if (body.contains("role")) {
+                    std::string new_role = body["role"].get<std::string>();
+                    
+                    // 验证角色是否合法
+                    std::vector<std::string> valid_roles = {"superadmin", "admin", "employee", "security", "visitor"};
+                    bool role_valid = false;
+                    for (const auto& r : valid_roles) {
+                        if (new_role == r) {
+                            role_valid = true;
+                            break;
+                        }
+                    }
+                    if (!role_valid) {
+                        res.body = utils::errorResponse(utils::ErrorCode::INVALID_PARAMS, "无效的角色").dump();
+                        return res;
+                    }
+                    
+                    // 角色权限层级校验
+                    if (payload->role == "admin") {
+                        // admin 不能修改任何 admin 及以上级别用户的角色（包括自己）
+                        if (user->role == "superadmin" || user->role == "admin") {
+                            res.code = 403;
+                            res.body = utils::errorResponse(utils::ErrorCode::FORBIDDEN, "无权限修改管理员角色").dump();
+                            return res;
+                        }
+                        // admin 不能将角色改为 superadmin 或 admin
+                        if (new_role == "superadmin" || new_role == "admin") {
+                            res.code = 403;
+                            res.body = utils::errorResponse(utils::ErrorCode::FORBIDDEN, "无权限修改为该角色").dump();
+                            return res;
+                        }
+                    }
+                    
+                    user->role = new_role;
+                }
                 if (body.contains("status")) user->status = body["status"].get<int>();
             }
             
