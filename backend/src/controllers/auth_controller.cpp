@@ -106,7 +106,7 @@ void setupAuthRoutes(crow::SimpleApp& app) {
             std::string real_name = body.value("real_name", std::string(""));
             std::string phone = body.value("phone", std::string(""));
             std::string email = body.value("email", std::string(""));
-            std::string role = body.value("role", std::string("visitor"));  // 默认注册为访客
+            std::string role = "visitor";  // 强制注册为访客，忽略客户端传入的角色
             
             // 验证必填字段
             if (username.empty() || password.empty()) {
