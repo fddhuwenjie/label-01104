@@ -7,6 +7,7 @@
 #include "response.h"
 #include "models.h"
 #include "auth_middleware.h"
+#include <unordered_set>
 
 using json = nlohmann::json;
 
@@ -148,6 +149,13 @@ void setupUserRoutes(crow::SimpleApp& app) {
                 return res;
             }
             
+            // 角色白名单验证
+            std::unordered_set<std::string> valid_roles = {"superadmin", "admin", "employee", "security", "visitor"};
+            if (valid_roles.find(role) == valid_roles.end()) {
+                res.body = utils::errorResponse(utils::ErrorCode::INVALID_PARAMS, "无效的角色类型").dump();
+                return res;
+            }
+            
             auto& db = db::Database::getInstance();
             
             // 检查用户名是否已存在
@@ -226,7 +234,16 @@ void setupUserRoutes(crow::SimpleApp& app) {
             
             // 只有管理员可以修改角色和状态
             if (middleware::isAdmin(payload->role)) {
-                if (body.contains("role")) user->role = body["role"].get<std::string>();
+                if (body.contains("role")) {
+                    std::string new_role = body["role"].get<std::string>();
+                    // 角色白名单验证
+                    std::unordered_set<std::string> valid_roles = {"superadmin", "admin", "employee", "security", "visitor"};
+                    if (valid_roles.find(new_role) == valid_roles.end()) {
+                        res.body = utils::errorResponse(utils::ErrorCode::INVALID_PARAMS, "无效的角色类型").dump();
+                        return res;
+                    }
+                    user->role = new_role;
+                }
                 if (body.contains("status")) user->status = body["status"].get<int>();
             }
             

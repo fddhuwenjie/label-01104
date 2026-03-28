@@ -112,8 +112,7 @@ const form = ref({
   password: '',
   real_name: '',
   phone: '',
-  email: '',
-  role: 'visitor'
+  email: ''
 })
 const loading = ref(false)
 const error = ref('')

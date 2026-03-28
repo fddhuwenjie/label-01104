@@ -106,7 +106,6 @@ void setupAuthRoutes(crow::SimpleApp& app) {
             std::string real_name = body.value("real_name", std::string(""));
             std::string phone = body.value("phone", std::string(""));
             std::string email = body.value("email", std::string(""));
-            std::string role = body.value("role", std::string("visitor"));  // 默认注册为访客
             
             // 验证必填字段
             if (username.empty() || password.empty()) {
@@ -124,10 +123,10 @@ void setupAuthRoutes(crow::SimpleApp& app) {
             
             // 创建用户
             models::User user;
-            user.id = utils::getIdGenerator().nextIdWithPrefix(models::getRolePrefix(role));
+            user.id = utils::getIdGenerator().nextIdWithPrefix(models::getRolePrefix("visitor"));
             user.username = username;
             user.password_hash = utils::Password::hash(password);
-            user.role = role;
+            user.role = "visitor";
             user.real_name = real_name;
             user.phone = phone;
             user.email = email;
