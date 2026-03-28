@@ -10,15 +10,17 @@ add_compile_options(-Wall -Wextra -O2)
 
 # 查找依赖
 find_package(Threads REQUIRED)
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(SQLITE3 REQUIRED sqlite3)
 
 # 包含目录
 include_directories(
     ${CMAKE_SOURCE_DIR}/include
     ${CMAKE_SOURCE_DIR}/third_party
     ${CMAKE_SOURCE_DIR}/third_party/crow
-    ${CMAKE_SOURCE_DIR}/third_party/sqlite
     ${CMAKE_SOURCE_DIR}/third_party/jwt-cpp
     ${CMAKE_SOURCE_DIR}/third_party/json
+    ${SQLITE3_INCLUDE_DIRS}
 )
 
 # 源文件
@@ -34,7 +36,6 @@ set(SOURCES
     src/controllers/appointment_controller.cpp
     src/controllers/check_controller.cpp
     src/controllers/stats_controller.cpp
-    third_party/sqlite/sqlite3.c
 )
 
 # 可执行文件
@@ -44,6 +45,7 @@ add_executable(visitor_system ${SOURCES})
 target_link_libraries(visitor_system
     Threads::Threads
     ${CMAKE_DL_LIBS}
+    ${SQLITE3_LIBRARIES}
 )
 
 # 安装
